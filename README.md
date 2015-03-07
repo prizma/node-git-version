@@ -11,7 +11,13 @@ This information is presented as Node.js module and can be used by Node.js app f
 ## Usage
 
 ```
-npm install node-git-version
-node ./node_modules/node-git-version/index.js 
-cat version.js
+$ npm install node-git-version
+$ node ./node_modules/node-git-version/index.js 
+$ cat version.js
+
+module.exports = {
+	tag: '1.0.0'
+	hash: 'e037765'
+	timestamp: 1425721222
+};
 ```
