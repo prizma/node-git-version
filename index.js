@@ -42,14 +42,14 @@
 	
 	if (tag)
 	{
-		versionInfo += '\n\ttag: \'' + tag + '\'';
+		versionInfo += '\n\ttag: \'' + tag + '\',';
 	}
 	else
 	{
-		versionInfo += '\n\ttag: null';
+		versionInfo += '\n\ttag: null,';
 	}
 
-	versionInfo += '\n\thash: \'' + sha + '\'';
+	versionInfo += '\n\thash: \'' + sha + '\',';
 	versionInfo += '\n\ttimestamp: ' + Math.floor(new Date().getTime()/1000);
 	versionInfo += '\n};\n';
 
