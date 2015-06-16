@@ -11,8 +11,9 @@ This information is presented as Node.js module and can be used by Node.js app f
 ## Usage
 
 ```
-$ npm install node-git-version
-$ node ./node_modules/node-git-version/index.js 
+$ npm install -g node-git-version
+$ // Go to your repo
+$ node-git-version
 $ cat version.js
 
 module.exports = {

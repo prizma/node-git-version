@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * This module creates version.js file in current directory
  * containing object with following information:
