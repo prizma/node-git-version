@@ -54,5 +54,5 @@ var child = exec('git reflog --decorate -1', function (error, stdout, stderr) {
 });
 
 function buildModuleString(versionInfo) {
-	return 'export const version = ' + JSON.stringify(versionInfo) + ';';;
+	return 'export const version = ' + JSON.stringify(versionInfo) + ';';
 }
