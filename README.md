@@ -16,9 +16,9 @@ $ // Go to your repo
 $ node-git-version
 $ cat version.js
 
-module.exports = {
-	tag: '1.0.0'
-	hash: 'e037765'
+export const version = {
+	tag: '1.0.0',
+	hash: 'e037765',
 	timestamp: 1425721222
 };
 ```
