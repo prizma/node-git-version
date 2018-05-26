@@ -1,11 +1,24 @@
 #!/usr/bin/env node
 
 /**
- * This module creates version.js file in current directory
- * containing object with following information:
- * tag - Git tag attached to HEAD (if any)
- * hash - SHA-1 hash of HEAD
- * timestamp - current timestamp
+ * This module creates git-version.js file in the current directory
+ * containing an object with following informations:
+ *    commit - SHA-1 hash of HEAD
+ *    shortCommit - First 7 characters of the commit hash
+ *    tags - Git tags attached to HEAD
+ *    branch - Current branch tracked by HEAD
+ *    remoteBranch - Branch on remote repository
+ *    author - Raw string of the commit author
+ *    authorName - Author name extracted from commit author
+ *    authorMail - Author mail extracted from commit author
+ *    merge - True if this commit merges commits
+ *    mergeCommits - Array of short commit hashes merged
+ *    date - An object with :
+ *       timestamp - The unix timestamp of the commit (in seconds)
+ *       gmt - The GMT formated date string
+ *       iso - The ISO 8601 formated date string
+ *    summary - The first line of the commit message
+ *    message - The entire commit message
  *
  * This information is presented as Node.js module and can be used
  * by Node.js app for getting version information
@@ -34,7 +47,7 @@ module.exports = function (callback) {
 		// commit 6f78514ee4c055453ac8effba2680b5fd5304f04 (HEAD -> master, tag: v1.1.0, origin/master)
 		// Merge: db7fb4a 0b5a3e4
 		// Author: BilliAlpha <???>
-		// Date:   Fri May 25 21:50:04 2018 +0200
+		// Date:   1527347037
 		//
 		//     Merge branch 'master'
 		//
