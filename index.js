@@ -1,70 +1,122 @@
 #!/usr/bin/env node
 
 /**
- * This module creates version.js file in current directory
- * containing object with following information:
- * tag - Git tag attached to HEAD (if any)
- * hash - SHA-1 hash of HEAD
- * timestamp - current timestamp
+ * This module creates git-version.js file in the current directory
+ * containing an object with following informations:
+ *    commit - SHA-1 hash of HEAD
+ *    shortCommit - First 7 characters of the commit hash
+ *    tags - Git tags attached to HEAD
+ *    branch - Current branch tracked by HEAD
+ *    remoteBranch - Branch on remote repository
+ *    author - Raw string of the commit author
+ *    authorName - Author name extracted from commit author
+ *    authorMail - Author mail extracted from commit author
+ *    merge - True if this commit merges commits
+ *    mergeCommits - Array of short commit hashes merged
+ *    date - An object with :
+ *       timestamp - The unix timestamp of the commit (in seconds)
+ *       gmt - The GMT formated date string
+ *       iso - The ISO 8601 formated date string
+ *    summary - The first line of the commit message
+ *    message - The entire commit message
  *
  * This information is presented as Node.js module and can be used
  * by Node.js app for getting version information
  *
  * Created: Maxim Stepanov
  * Date: March 2015
+ * Modified: BilliAlpha
+ * Date: May 2018
  */
 
- var fs = require('fs');
- var exec = require('child_process').exec;
- var child = exec('git reflog --decorate -1', function (error, stdout, stderr) 
- {
- 	if (error)
- 	{
-		// Shit
-		console.log('[FAILED]: Failed to run Git command');
-		process.exit(1);
-	}
+var fs = require('fs');
+var exec = require('child_process').exec;
 
-	// Example output: a32d6d8 (HEAD, tag: TAG-V.02, tag: TAG-V.01, master) HEAD@{0}: commit (initial): Asd
-	// Run regular expression to extract sha and tag
-	var sha = stdout.match(/[a-z0-9]+\s\(HEAD/g);
-	if (sha && sha.length > 0)
-	{
-		sha = sha[0].slice(0, -6);
-	}
+module.exports = function (callback) {
+	var versionInfo = {};
 
-	var tag = stdout.match(/tag\:\s[a-zA-Z0-9\-\.]+\,/g);
-	if (tag && tag.length > 0)
-	{
-		tag = tag[0].slice(5, -1);
-	}
-
-	// Compose version file info
-	var versionInfo = 'module.exports = {';
-	
-	if (tag)
-	{
-		versionInfo += '\n\ttag: \'' + tag + '\',';
-	}
-	else
-	{
-		versionInfo += '\n\ttag: null,';
-	}
-
-	versionInfo += '\n\thash: \'' + sha + '\',';
-	versionInfo += '\n\ttimestamp: ' + Math.floor(new Date().getTime()/1000);
-	versionInfo += '\n};\n';
-
-	// Create version.js file
-	fs.writeFile('version.js', versionInfo, function(err) 
-	{
-		if(err) 
-		{
-			console.log('[FAILED]: can\'t create version.js file. Permission issue?');
+	var child = exec('git log --decorate -1 --date=unix', function (error, stdout, stderr) {
+		if (error) { // Shit
+			console.log('[Git-Version]: Failed to run Git command');
+			if (callback) callback(error);
+			return;
 		}
-		else
-		{
-			console.log('[OK]');
+
+		// Example output:
+		//
+		// commit 6f78514ee4c055453ac8effba2680b5fd5304f04 (HEAD -> master, tag: v1.1.0, origin/master)
+		// Merge: db7fb4a 0b5a3e4
+		// Author: BilliAlpha <???>
+		// Date:   1527347037
+		//
+		//     Merge branch 'master'
+		//
+
+		var data = stdout.split('\n');
+
+		// Run regular expression to extract firstLine parts
+		var firstLine = data[0].match(/commit ([a-z0-9]{40})(?:\s\((.+)\))?/);
+		if (!firstLine || firstLine.length<2) {
+			if (callback) callback("Invalid log entry");
+			return;
 		}
+
+		// Get commit id
+		versionInfo.commit = firstLine[1].substr(0,40);
+		versionInfo.shortCommit = versionInfo.commit.substr(0,7);
+
+		// Parse decorate infos
+		versionInfo.tags = [];
+		if (firstLine.length > 2) {
+			var decorate = firstLine[2].split(',');
+			for (var d=0; d<decorate.length; d++) {
+				var e = decorate[d].trim();
+				// console.log("Decorate "+d+": "+e); // Debug
+				if (e.startsWith('tag: ')) { // Get tags
+					versionInfo.tags.push(e.substring(5));
+				} else if (e.startsWith('HEAD ->')) {
+					versionInfo.branch = e.substr(7);
+				} else if (!versionInfo.remoteBranch && e.indexOf('/')!==-1) {
+					versionInfo.remoteBranch = e;
+				}
+			}
+		}
+
+		for (var l=1; l<data.length; l++) {
+			var line = data[l];
+			if (line.startsWith('Merge:')) {
+				versionInfo.merge = true;
+				var mergeCommits = line.substring(-15).split(' ');
+				versionInfo.mergeCommits = mergeCommits;
+			} else if (line.startsWith('Author:')) {
+				versionInfo.author = line.split(':')[1].trim();
+				var authorParts = versionInfo.author.split('<');
+				versionInfo.authorName = authorParts[0].trim()
+				versionInfo.authorMail = authorParts[1].slice(0,-1);
+			} else if (line.startsWith('Date:')) {
+				versionInfo.date = {};
+				var date = new Date(line.split(':')[1].trim()*1000)
+				versionInfo.date.timestamp = date.getTime()/1000;
+				versionInfo.date.iso = date.toISOString();
+				versionInfo.date.gmt = date.toGMTString();
+			} else if (!versionInfo.message && line.startsWith('    ')) {
+				versionInfo.summary = line.substring(4);
+				versionInfo.message = versionInfo.summary+'\n';
+			} else if (versionInfo.message && line.startsWith('    ')) {
+				versionInfo.message += line.substring(4)+'\n';
+			}
+		}
+
+		// Call callback
+		if (callback) callback(null, versionInfo);
+
+		// Compose version file info
+		var fileContents = 'module.exports = '+JSON.stringify(versionInfo, null, '\t')+';\n';
+		// Create git-version.js file
+		fs.writeFile('git-version.js', fileContents, function(err) {
+			if(err) {
+				console.warn('[Git-Version]: Can\'t create git-version.js file. Permission issue?');
+			}
+		});
 	});
-});
+}

@@ -1,20 +1,30 @@
 {
 	"name": "node-git-version",
 	"description": "Node.js application for creating version file of git repository",
- 	"version": "0.1.1",
+ 	"version": "1.0.0",
  	"main": "index.js",
  	"bin": "index.js",
-	"dependencies": 
-	{
-	},
+	"dependencies": {},
 	"keywords": [
 		"git",
-		"nodejs",
-		"node.js",
 		"version",
-		"prizma"
+		"branch",
+		"commit",
+		"author",
+		"date",
+		"tags"
 	],
-	"author": "maxxie <mast@imast.ru> (https://prizma.mobi)",
+	"contributors": [
+		{
+	    "name": "maxxie",
+	    "email": "mast@imast.ru",
+	    "web": "https://prizma.mobi"
+	  }, {
+	    "name": "BilliAlpha",
+	    "email": "billi.pamege.300@gmail.com",
+	    "web": "http://billi-dot.pe.hu"
+	  }
+	],
 	"license": "MIT",
 	"repository" :
 	{
