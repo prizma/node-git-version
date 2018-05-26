@@ -19,7 +19,7 @@
 var fs = require('fs');
 var exec = require('child_process').exec;
 
-module.exports = function (callback, opts) {
+module.exports = function (callback) {
 	var versionInfo = {};
 
 	var child = exec('git log --decorate -1 --date=unix', function (error, stdout, stderr) {
@@ -81,7 +81,11 @@ module.exports = function (callback, opts) {
 				versionInfo.authorName = authorParts[0].trim()
 				versionInfo.authorMail = authorParts[1].slice(0,-1);
 			} else if (line.startsWith('Date:')) {
-				versionInfo.date = line.split(':')[1].trim();
+				versionInfo.date = {};
+				var date = new Date(line.split(':')[1].trim()*1000)
+				versionInfo.date.timestamp = date.getTime()/1000;
+				versionInfo.date.iso = date.toISOString();
+				versionInfo.date.gmt = date.toGMTString();
 			} else if (!versionInfo.message && line.startsWith('    ')) {
 				versionInfo.summary = line.substring(4);
 				versionInfo.message = versionInfo.summary+'\n';
