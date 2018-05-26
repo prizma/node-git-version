@@ -9,8 +9,7 @@
 		"git",
 		"nodejs",
 		"node.js",
-		"version",
-		"prizma"
+		"version"
 	],
 	"author": "BilliAlpha <billi.pamege.300@gmail.com>",
 	"license": "MIT",

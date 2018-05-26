@@ -42,28 +42,28 @@ module.exports = function (callback, opts) {
 		var data = stdout.split('\n');
 
 		// Run regular expression to extract firstLine parts
-		var firstLine = data[0].match(/commit ([a-z0-9]{40})(?: \((.+)\))?/g);
+		var firstLine = data[0].match(/commit ([a-z0-9]{40})(?:\s\((.+)\))?/);
+		if (!firstLine || firstLine.length<2) {
+			if (callback) callback("Invalid log entry");
+			return;
+		}
 
 		// Get commit id
-		if (firstLine && firstLine.length > 0) {
-			versionInfo.commit = firstLine[0];
-			versionInfo.shortCommit = versionInfo.commit.slice(0,7);
-		}
+		versionInfo.commit = firstLine[1].substr(0,40);
+		versionInfo.shortCommit = versionInfo.commit.substr(0,7);
 
 		// Parse decorate infos
 		versionInfo.tags = [];
-		if (firstLine && firstLine.length > 1) {
-			var decorate = firstLine[1].split(',');
+		if (firstLine.length > 2) {
+			var decorate = firstLine[2].split(',');
 			for (var d=0; d<decorate.length; d++) {
 				var e = decorate[d].trim();
+				// console.log("Decorate "+d+": "+e); // Debug
 				if (e.startsWith('tag: ')) { // Get tags
 					versionInfo.tags.push(e.substring(5));
-				} else if (e.startsWith('HEAD')) {
-					var arrow = e.indexOf('->');
-					if (arrow!==-1) {
-						versionInfo.branch = e.substring(arrow+1);
-					}
-				} else if (d===decorate.length-1) {
+				} else if (e.startsWith('HEAD ->')) {
+					versionInfo.branch = e.substr(7);
+				} else if (!versionInfo.remoteBranch && e.indexOf('/')!==-1) {
 					versionInfo.remoteBranch = e;
 				}
 			}
@@ -79,11 +79,14 @@ module.exports = function (callback, opts) {
 				versionInfo.author = line.split(':')[1].trim();
 				var authorParts = versionInfo.author.split('<');
 				versionInfo.authorName = authorParts[0].trim()
-				versionInfo.authorMail = authorParts[1].substring(0,-1);
+				versionInfo.authorMail = authorParts[1].slice(0,-1);
 			} else if (line.startsWith('Date:')) {
 				versionInfo.date = line.split(':')[1].trim();
-			} else if (line.startsWith('    ')) {
-				versionInfo.message = line;
+			} else if (!versionInfo.message && line.startsWith('    ')) {
+				versionInfo.summary = line.substring(4);
+				versionInfo.message = versionInfo.summary+'\n';
+			} else if (versionInfo.message && line.startsWith('    ')) {
+				versionInfo.message += line.substring(4)+'\n';
 			}
 		}
 
@@ -91,7 +94,7 @@ module.exports = function (callback, opts) {
 		if (callback) callback(null, versionInfo);
 
 		// Compose version file info
-		var fileContents = 'module.exports = '+JSON.stringify(versionInfo, null, 2)+';\n';
+		var fileContents = 'module.exports = '+JSON.stringify(versionInfo, null, '\t')+';\n';
 		// Create git-version.js file
 		fs.writeFile('git-version.js', fileContents, function(err) {
 			if(err) {
