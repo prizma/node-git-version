@@ -19,14 +19,14 @@
 var fs = require('fs');
 var exec = require('child_process').exec;
 
-module.exports = function (opts) {
+module.exports = function (callback, opts) {
 	var versionInfo = {};
-	
+
 	var child = exec('git log --decorate -1 --date=unix', function (error, stdout, stderr) {
-		if (error) {
-			// Shit
-			console.log('[FAILED]: Failed to run Git command');
-			process.exit(error.code);
+		if (error) { // Shit
+			console.log('[Git-Version]: Failed to run Git command');
+			if (callback) callback(error);
+			return;
 		}
 
 		// Example output:
@@ -38,12 +38,12 @@ module.exports = function (opts) {
 		//
 		//     Merge branch 'master'
 		//
-		
+
 		var data = stdout.split('\n');
-		
+
 		// Run regular expression to extract firstLine parts
 		var firstLine = data[0].match(/commit ([a-z0-9]{40})(?: \((.+)\))?/g);
-		
+
 		// Get commit id
 		if (firstLine && firstLine.length > 0) {
 			versionInfo.commit = firstLine[0];
@@ -83,18 +83,19 @@ module.exports = function (opts) {
 			} else if (line.startsWith('Date:')) {
 				versionInfo.date = line.split(':')[1].trim();
 			} else if (line.startsWith('    ')) {
-				versionInfo.message = line;	
+				versionInfo.message = line;
 			}
 		}
+
+		// Call callback
+		if (callback) callback(null, versionInfo);
 
 		// Compose version file info
 		var fileContents = 'module.exports = '+JSON.stringify(versionInfo, null, 2)+';\n';
 		// Create git-version.js file
 		fs.writeFile('git-version.js', fileContents, function(err) {
 			if(err) {
-				console.log('[FAILED]: can\'t create git-version.js file. Permission issue?');
-			} else {
-				console.log('[OK]');
+				console.warn('[Git-Version]: Can\'t create git-version.js file. Permission issue?');
 			}
 		});
 	});

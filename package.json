@@ -1,5 +1,5 @@
 {
-	"name": "node-git-version",
+	"name": "node-git-version-infos",
 	"description": "Node.js application for creating version file of git repository",
  	"version": "1.0.0",
  	"main": "index.js",
