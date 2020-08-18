@@ -33,7 +33,7 @@
 		sha = sha[0].slice(0, -6);
 	}
 
-	var tag = stdout.match(/tag\:\s[a-zA-Z0-9\-\.]+\,/g);
+	var tag = stdout.match(/tag\:\s[a-zA-Z0-9\-\.]+/g);
 	if (tag && tag.length > 0)
 	{
 		tag = tag[0].slice(5, -1);
